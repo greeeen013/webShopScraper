@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def get_product_images(product_code):
+def directdeal_get_product_images(product_code):
     url = f"https://directdeal.me/search?search={product_code}"
     print(f"[DEBUG] Target URL: {url}")
 
@@ -77,11 +77,8 @@ def get_product_images(product_code):
         print(f"[ERROR] {str(e)}")
         return []
 
-
-# Test
-for i in range(1, 20):
-    test_number=19353457000
-    print("\n=== TEST RUN ===")
-    images = get_product_images(test_number)
-    print("\n=== RESULTS ===")
-    print(*images, sep='\n')
+test_number="19353457000"
+print("\n=== TEST RUN ===")
+images = directdeal_get_product_images(test_number)
+print("\n=== RESULTS ===")
+print(*images, sep='\n')

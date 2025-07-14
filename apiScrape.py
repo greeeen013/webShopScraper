@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def get_product_images(PNumber):
+def api_get_product_images(PNumber):
     url = f"https://shop.api.de/product/details/{PNumber}"
     print(f"[DEBUG] Target URL: {url}")
 
@@ -54,8 +54,8 @@ def get_product_images(PNumber):
 
 # Testování
 print("=== Starting test ===")
-test_pnumber = 352959
-images = get_product_images(test_pnumber)
+test_pnumber = "352959"
+images = api_get_product_images(test_pnumber)
 
 print("\n=== Results ===")
 if images:
