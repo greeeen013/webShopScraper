@@ -53,14 +53,16 @@ def api_get_product_images(PNumber):
 
 
 # Testování
-print("=== Starting test ===")
-test_pnumber = "352959"
-images = api_get_product_images(test_pnumber)
+if __name__ == "__main__":
+    print("=== Starting test ===")
+    test_pnumber = "352959"
+    images = api_get_product_images(test_pnumber)
+    print(images)
 
-print("\n=== Results ===")
-if images:
-    for i, img_url in enumerate(images, 1):
-        #print(f"Image {i}: {img_url}")
-        print(f"{img_url};")
-else:
-    print("No images found or an error occurred")
+    print("\n=== Results ===")
+    if images:
+        for i, img_url in enumerate(images, 1):
+            #print(f"Image {i}: {img_url}")
+            print(f"{img_url};")
+    else:
+        print("No images found or an error occurred")
