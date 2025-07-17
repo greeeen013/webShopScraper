@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="88c76fd1-84b7-433e-8b66-2a72d6d8ce6b" name="Changes" comment="funkční form a napojení api">
-      <change beforePath="$PROJECT_DIR$/.idea/WebShopScraper.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/WebShopScraper.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="88c76fd1-84b7-433e-8b66-2a72d6d8ce6b" name="Changes" comment="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/directdealScrape.py" beforeDir="false" afterPath="$PROJECT_DIR$/directdealScrape.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/easynotebooksScrape.py" beforeDir="false" afterPath="$PROJECT_DIR$/easynotebooksScrape.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/fourcomScrape.py" beforeDir="false" afterPath="$PROJECT_DIR$/fourcomScrape.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/itplanetScrape.py" beforeDir="false" afterPath="$PROJECT_DIR$/itplanetScrape.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/octoScrape.py" beforeDir="false" afterPath="$PROJECT_DIR$/octoScrape.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -54,7 +47,7 @@
     "ignore.virus.scanning.warn.message": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.itplanetScrape">
+  <component name="RunManager" selected="Python.main">
     <configuration name="apiScrape" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="WebShopScraper" />
       <option name="ENV_FILES" value="" />
@@ -167,8 +160,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.itplanetScrape" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.itplanetScrape" />
         <item itemvalue="Python.directdealScrape" />
         <item itemvalue="Python.databasetest" />
         <item itemvalue="Python.apiScrape" />
@@ -199,11 +192,20 @@
       <option name="project" value="LOCAL" />
       <updated>1752746697145</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb">
+      <option name="closed" value="true" />
+      <created>1752755200726</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1752755200726</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="funkční form a napojení api" />
-    <option name="LAST_COMMIT_MESSAGE" value="funkční form a napojení api" />
+    <MESSAGE value="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb" />
+    <option name="LAST_COMMIT_MESSAGE" value="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb" />
   </component>
 </project>

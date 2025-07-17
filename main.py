@@ -9,6 +9,7 @@ import queue
 import asyncio
 import json
 import os
+from dotenv import load_dotenv
 
 DODAVATELE = {
     "api (161784)": "161784",
@@ -161,6 +162,9 @@ class ObrFormApp:
     def connect_to_database(self):
         """Připojí se k SQL Serveru"""
         try:
+            # Load environment variables from .env file
+            load_dotenv()
+
             server = os.getenv('DB_SERVER')
             database = os.getenv('DB_DATABASE')
             username = os.getenv('DB_USERNAME')
