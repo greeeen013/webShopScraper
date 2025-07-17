@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
+import asyncio
 
-
-def directdeal_get_product_images(product_code):
+async def directdeal_get_product_images(product_code):
     url = f"https://directdeal.me/search?search={product_code}"
     print(f"[DEBUG] Target URL: {url}")
 
@@ -76,9 +76,3 @@ def directdeal_get_product_images(product_code):
     except Exception as e:
         print(f"[ERROR] {str(e)}")
         return []
-
-test_number="19353457000"
-print("\n=== TEST RUN ===")
-images = directdeal_get_product_images(test_number)
-print("\n=== RESULTS ===")
-print(*images, sep='\n')

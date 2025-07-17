@@ -7,17 +7,69 @@ import pyodbc
 import threading
 import queue
 import asyncio
+import json
+import os
 
 DODAVATELE = {
     "api (161784)": "161784",
     "everit (268493)": "268493",
-    "fourcom (312585)": "312585",
-    "OCTO IT (348651)": "348651",
-    "NetFactory (351191)": "351191"
+    #"fourcom (312585)": "312585", # LOGIN
+    "octo it (348651)": "348651",
+    "NetFactory (351191)": "351191",
+    #"Notebooksbilliger ()": "" # nescrapovaci stranka
+    "itplanet (338745)": "338745",
 }
 
-POCTY_PRODUKTU = [25, 50, 75, 100]
+POCTY_PRODUKTU = [25, 50, 75, 100, 1000]
 OBRAZKY_NA_RADEK = ["2", "3", "4", "5", "6", "nekonečno"]
+
+# Nová konstanta pro soubor s ignorovanými produkty
+IGNORE_FILE = "ignoreSivCode.json"
+
+
+class LoadingScreen:
+    def __init__(self, root):
+        self.root = root
+        self.loading_window = tk.Toplevel(root)
+        self.loading_window.title("Načítání...")
+        self.loading_window.geometry("300x150")
+        self.loading_window.resizable(False, False)
+
+        # Center the loading window
+        window_width = 300
+        window_height = 150
+        screen_width = self.loading_window.winfo_screenwidth()
+        screen_height = self.loading_window.winfo_screenheight()
+        position_top = int(screen_height / 2 - window_height / 2)
+        position_right = int(screen_width / 2 - window_width / 2)
+        self.loading_window.geometry(f"{window_width}x{window_height}+{position_right}+{position_top}")
+
+        self.overlay = None  # Přidáno pro překryvnou obrazovku
+
+        # Make it modal
+        self.loading_window.grab_set()
+        self.loading_window.transient(root)
+
+        # Loading label
+        tk.Label(self.loading_window, text="Načítám produkty...", font=("Arial", 14)).pack(pady=20)
+
+        # Progress bar
+        self.progress = ttk.Progressbar(
+            self.loading_window,
+            orient='horizontal',
+            mode='indeterminate',
+            length=200
+        )
+        self.progress.pack(pady=10)
+        self.progress.start()
+
+        # Disable close button
+        self.loading_window.protocol("WM_DELETE_WINDOW", lambda: None)
+
+    def close(self):
+        self.progress.stop()
+        self.loading_window.grab_release()
+        self.loading_window.destroy()
 
 
 class ObrFormApp:
@@ -31,6 +83,7 @@ class ObrFormApp:
         self.filtrovane_produkty = []
         self.img_refs = {}
         self.vybrany_dodavatel = None
+        self.vybrany_dodavatel_kod = None
         self.df = None
         self.produkty_k_zpracovani = []
         self.produkt_widgety = {}
@@ -42,8 +95,12 @@ class ObrFormApp:
         self.image_check_vars = {}
         self.loading_active = False
         self.max_threads = 10
-        self.obrazky_na_radek = 4  # Výchozí hodnota
+        self.obrazky_na_radek = 4
         self.scrollregion_scheduled = False
+        self.loading_screen = None
+
+        # Načtení ignorovaných kódů při startu
+        self.ignored_codes = self.load_ignored_codes()
 
         # Konfigurace databáze
         self.table_name = "StoItemCom"
@@ -54,16 +111,60 @@ class ObrFormApp:
             'notes': 'SivNotePic'
         }
 
+        # Mapování funkcí pro jednotlivé dodavatele
+        from apiScrape import api_get_product_images
+        from directdealScrape import directdeal_get_product_images
+        from octoScrape import octo_get_product_images
+        from easynotebooksScrape import easynotebooks_get_product_images
+        from itplanetScrape import itplanet_get_product_image
+
+        self.dodavatele_funkce = {
+            "161784": api_get_product_images,
+            "268493": directdeal_get_product_images, # EVERIT
+            # "312585": fourcom_get_product_images, # login
+            "348651": octo_get_product_images,
+            "351191": easynotebooks_get_product_images,
+            "338745": itplanet_get_product_image
+        }
+
         print("[DEBUG] Inicializace GUI...")
         self.setup_gui()
+
+    def load_ignored_codes(self):
+        """Načte ignorované kódy z JSON souboru"""
+        try:
+            if os.path.exists(IGNORE_FILE):
+                with open(IGNORE_FILE, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            return {}
+        except Exception as e:
+            print(f"[CHYBA] Načtení ignorovaných kódů: {e}")
+            return {}
+
+    def save_ignored_codes(self):
+        """Uloží ignorované kódy do JSON souboru"""
+        try:
+            with open(IGNORE_FILE, 'w', encoding='utf-8') as f:
+                json.dump(self.ignored_codes, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            print(f"[CHYBA] Ukládání ignorovaných kódů: {e}")
+
+    def add_ignored_code(self, supplier_code, siv_code):
+        """Přidá kód do seznamu ignorovaných pro daného dodavatele"""
+        if supplier_code not in self.ignored_codes:
+            self.ignored_codes[supplier_code] = []
+
+        if siv_code not in self.ignored_codes[supplier_code]:
+            self.ignored_codes[supplier_code].append(siv_code)
+            self.save_ignored_codes()
 
     def connect_to_database(self):
         """Připojí se k SQL Serveru"""
         try:
-            server = '192.168.1.14'
-            database = 'i6ABCtest'
-            username = 'test'
-            password = 'test'
+            server = os.getenv('DB_SERVER')
+            database = os.getenv('DB_DATABASE')
+            username = os.getenv('DB_USERNAME')
+            password = os.getenv('DB_PASSWORD')
 
             conn_str = (
                 f'DRIVER={{SQL Server}};'
@@ -162,6 +263,9 @@ class ObrFormApp:
         self.canvas.bind("<MouseWheel>", self._on_mousewheel)
         self.inner_frame.bind("<MouseWheel>", self._on_mousewheel)
 
+        # PŘIDÁNO: Scrollování v celé aplikaci
+        self.root.bind("<MouseWheel>", self._on_mousewheel)
+
         # Tlačítka dole
         btn_frame = tk.Frame(self.root)
         btn_frame.pack(pady=10)
@@ -240,46 +344,106 @@ class ObrFormApp:
     def combo_selected(self, event):
         """Zpracuje výběr dodavatele a počtu produktů."""
         self.vybrany_dodavatel = self.combo_dodavatel.get()
+        self.vybrany_dodavatel_kod = DODAVATELE[self.vybrany_dodavatel]
         self.buffer_size = int(self.combo_pocet.get())
-        kod = DODAVATELE[self.vybrany_dodavatel]
 
-        print(f"[DEBUG] Vybrán dodavatel: {self.vybrany_dodavatel}, počet: {self.buffer_size}")
+        print(
+            f"[DEBUG] Vybrán dodavatel: {self.vybrany_dodavatel}, kód: {self.vybrany_dodavatel_kod}, počet: {self.buffer_size}")
 
-        # Připojení k databázi
-        if not self.connect_to_database():
-            return
+        # Zobrazit černou překryvnou obrazovku
+        self.show_overlay()
 
-        if not self.check_database_structure():
-            self.close_database()
-            return
+        # Vytvořit loading screen (bude nad černou obrazovkou)
+        self.loading_screen = LoadingScreen(self.root)
+        self.root.update()  # Force update to show loading screen immediately
 
+        # Zakázat UI prvky během načítání
+        self.combo_dodavatel.config(state='disabled')
+        self.combo_pocet.config(state='disabled')
+        self.combo_obrazky_na_radek.config(state='disabled')
+        self.chk_all.config(state='disabled')
+
+        # Spustit načítání v samostatném vlákně
+        loading_thread = threading.Thread(target=self.load_products_thread, daemon=True)
+        loading_thread.start()
+
+    def show_overlay(self):
+        """Zobrazí černou překryvnou obrazovku a deaktivuje UI"""
+        self.overlay = tk.Canvas(self.root, bg='black', highlightthickness=0)
+        self.overlay.place(x=0, y=0, relwidth=1, relheight=1)
+
+        # Opraveno: Pro Canvas používáme jiný způsob pro zvednutí nad ostatní widgety
+        self.overlay.tag_raise(tk.ALL)  # Místo self.overlay.lift()
+
+        # Přidat průhlednost (volitelné)
         try:
-            # Načtení produktů
+            self.overlay.attributes('-alpha', 0.7)
+        except:
+            pass  # Některé platformy nepodporují průhlednost
+
+    def hide_overlay(self):
+        """Skryje černou překryvnou obrazovku"""
+        if hasattr(self, 'overlay') and self.overlay:
+            self.overlay.destroy()
+            self.overlay = None
+
+    def load_products_thread(self):
+        """Thread for loading products to keep UI responsive"""
+        try:
+            # Připojení k databázi
+            if not self.connect_to_database():
+                self.root.after(0, self.loading_screen.close)
+                return
+
+            if not self.check_database_structure():
+                self.close_database()
+                self.root.after(0, self.loading_screen.close)
+                return
+
+            # Získání ignorovaných kódů pro tohoto dodavatele
+            ignored_codes = self.ignored_codes.get(self.vybrany_dodavatel_kod, [])
+            ignored_condition = ""
+            params = [self.vybrany_dodavatel_kod]
+
+            # Před hlavním dotazem
+            self.cursor.execute("CREATE TABLE #IgnoredCodes (SivCode VARCHAR(50))")
+
+            # Vložení ignorovaných kódů
+            if ignored_codes:
+                self.cursor.executemany("INSERT INTO #IgnoredCodes VALUES (?)",
+                                        [(code,) for code in ignored_codes])
+
+            # Hlavní dotaz
             query = f"""
                 SELECT TOP {self.buffer_size} SivCode, SivName 
                 FROM [{self.table_name}] 
-                WHERE [{self.column_mapping['supplier']}] = ? 
+                WHERE [{self.column_mapping['supplier']}] = ?
                 AND ([{self.column_mapping['notes']}] IS NULL OR [{self.column_mapping['notes']}] = '')
+                AND NOT EXISTS (
+                    SELECT 1 FROM #IgnoredCodes WHERE SivCode = [{self.table_name}].[{self.column_mapping['code']}]
+                )
             """
             print(f"[DEBUG] Provádím dotaz: {query}")
-            self.cursor.execute(query, (kod,))
+            print(f"[DEBUG] Parametry: {params}")
+
+            self.cursor.execute(query, params)
             self.filtrovane_produkty = [
                 {'SivCode': row.SivCode, 'SivName': row.SivName}
                 for row in self.cursor.fetchall()
             ]
 
-            print(f"[DEBUG] Načteno {len(self.filtrovane_produkty)} produktů")
+            print(f"[DEBUG] Načteno {len(self.filtrovane_produkty)} produktů (ignorováno {len(ignored_codes)})")
 
             # Uzavření databáze
             self.close_database()
 
             if not self.filtrovane_produkty:
-                messagebox.showinfo("Info", "Žádné produkty k doplnění.")
+                self.root.after(0, lambda: messagebox.showinfo("Info", "Žádné produkty k doplnění."))
+                self.root.after(0, self.loading_screen.close)
                 return
 
             # Vyčištění GUI
-            for widget in self.inner_frame.winfo_children():
-                widget.destroy()
+            self.root.after(0, self.clear_gui)
 
             self.produkty_k_zpracovani = self.filtrovane_produkty[:]
             self.produkt_widgety = {}
@@ -293,8 +457,15 @@ class ObrFormApp:
 
         except Exception as e:
             print(f"[CHYBA] Při načítání produktů: {e}")
-            messagebox.showerror("Chyba", f"Chyba při načítání produktů:\n{e}")
+            self.root.after(0, lambda: messagebox.showerror("Chyba", f"Chyba při načítání produktů:\n{e}"))
+            self.root.after(0, self.loading_screen.close)
+            self.root.after(0, self.hide_overlay)  # Přidáno skrytí overlay při chybě
             self.close_database()
+
+    def clear_gui(self):
+        """Clear the GUI in the main thread"""
+        for widget in self.inner_frame.winfo_children():
+            widget.destroy()
 
     def start_async_image_loading(self):
         """Spustí asynchronní načítání obrázků s optimalizovaným počtem vláken."""
@@ -321,6 +492,13 @@ class ObrFormApp:
         if not alive_threads and not self.produkty_k_zpracovani:
             self.loading_active = False
             print("[THREAD] Všechna vlákna dokončena")
+
+            # Re-enable UI elements
+            self.root.after(0, self.enable_ui_elements)
+
+            # Close loading screen and hide overlay
+            self.root.after(0, self.loading_screen.close)
+            self.root.after(0, self.hide_overlay)  # Přidáno skrytí overlay
         else:
             # Spustit další vlákna pokud je volná kapacita
             free_slots = self.max_threads - len(alive_threads)
@@ -334,22 +512,36 @@ class ObrFormApp:
 
             self.root.after(500, self.check_threads)
 
+    def enable_ui_elements(self):
+        """Re-enable UI elements after loading is complete"""
+        self.combo_dodavatel.config(state='readonly')
+        self.combo_pocet.config(state='readonly')
+        self.combo_obrazky_na_radek.config(state='readonly')
+        self.chk_all.config(state='normal')
+
     def load_product_images(self, produkt):
         """Načte obrázky pro produkt ve vlákně."""
         try:
             kod = produkt['SivCode']
             print(f"[THREAD] Načítám obrázky pro produkt: {kod}")
 
-            # Nejprve získej URL obrázků
-            from apiScrape import api_get_product_images
+            # ZÍSKÁNÍ FUNKCE PRO VYBRANÉHO DODAVATELE
+            funkce_pro_dodavatele = self.dodavatele_funkce.get(self.vybrany_dodavatel_kod)
+
+            if not funkce_pro_dodavatele:
+                print(f"[CHYBA] Pro dodavatele {self.vybrany_dodavatel_kod} není definována funkce")
+                return
+
+            # Získání URL obrázků pomocí funkce pro daného dodavatele
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            urls = loop.run_until_complete(api_get_product_images(kod))
+            urls = loop.run_until_complete(funkce_pro_dodavatele(kod))
             loop.close()
 
-            # Pokud nejsou žádné obrázky, přeskoč tento produkt
+            # Pokud nejsou žádné obrázky, přidáme do ignore listu
             if not urls:
-                print(f"[INFO] Žádné obrázky pro produkt {kod}, přeskočeno")
+                print(f"[INFO] Žádné obrázky pro produkt {kod}, přidávám do ignorovaných")
+                self.add_ignored_code(self.vybrany_dodavatel_kod, kod)
                 return
 
             # Zobraz produkt pouze pokud má obrázky
@@ -395,11 +587,13 @@ class ObrFormApp:
         # Checkbox pro výběr všech obrázků v produktu
         var_produkt = tk.BooleanVar(value=False)
         self.produkt_check_vars[kod] = var_produkt
+
+        # UPRAVENO: Zvětšený a tučný text
         chk_produkt = tk.Checkbutton(
             frame_produkt,
             text="Vybrat všechny obrázky",
             variable=var_produkt,
-            font=("Arial", 10),
+            font=("Arial", 14, "bold"),  # Zvětšeno na 14 a tučné
             command=lambda k=kod: self.toggle_product_images(k)
         )
         chk_produkt.grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
@@ -541,6 +735,7 @@ class ObrFormApp:
             del self.produkt_widgety[kod]
             if kod in self.img_refs:
                 del self.img_refs[kod]
+        self.hide_overlay()  # Přidáno skrytí overlay
         messagebox.showinfo("Info", "Všechny produkty byly zrušeny.")
 
     def close_database(self):

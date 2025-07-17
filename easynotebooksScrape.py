@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def easynotebooks_get_product_images(product_code):
+async def easynotebooks_get_product_images(product_code):
     # Construct the search URL
     url = f"https://www.easynotebooks.de/search?sSearch={product_code}"
 
@@ -34,13 +34,3 @@ def easynotebooks_get_product_images(product_code):
     image_urls = [img['srcset'] for img in img_tags]
 
     return image_urls
-
-
-# Example usage
-product_code = "IT0.005.050.675.1"
-image_urls = easynotebooks_get_product_images(product_code)
-
-# Print the results
-print(f"Found {len(image_urls)} images for product {product_code}:")
-for i, url in enumerate(image_urls, 1):
-    print(f"{i}. {url}")

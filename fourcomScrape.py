@@ -4,7 +4,7 @@ import os
 from bs4 import BeautifulSoup
 
 
-def get_product_images(PNumber):
+def fourcrom_get_product_images(PNumber):
     # Load environment variables
     load_dotenv()
 

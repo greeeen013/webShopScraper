@@ -1,8 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
+import asyncio
 
 
-def octo_get_product_images(product_code):
+async def octo_get_product_images(product_code):
     # First stage - search page
     search_url = f"https://www.octo24.com/result.php?keywords={product_code}"
     print(f"[DEBUG] Searching product at: {search_url}")
@@ -100,17 +101,3 @@ def octo_get_product_images(product_code):
     except Exception as e:
         print(f"[ERROR] Processing failed: {str(e)}")
         return []
-
-
-# Test the function
-print("=== TESTING FUNCTION ===")
-test_code = "ST20000NM007D"
-print(f"Testing with product code: {test_code}")
-images = octo_get_product_images(test_code)
-
-print("\n=== RESULTS ===")
-if images:
-    for i, img_url in enumerate(images, 1):
-        print(f"Image {i}: {img_url}")
-else:
-    print("No images found or an error occurred")
