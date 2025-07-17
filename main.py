@@ -103,8 +103,12 @@ class ObrFormApp:
         # Načtení ignorovaných kódů při startu
         self.ignored_codes = self.load_ignored_codes()
 
+        load_dotenv()
+        db_table = os.getenv('DB_TABLE')
+
+
         # Konfigurace databáze
-        self.table_name = "StoItemCom"
+        self.table_name = db_table
         self.column_mapping = {
             'code': 'SivCode',
             'name': 'SivName',
