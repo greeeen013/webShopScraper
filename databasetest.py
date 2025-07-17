@@ -1,50 +1,37 @@
-import sqlite3
-import io
+import pyodbc
+import pandas as pd
 
 
-def test_sql_file(filename):
-    # Vytvoření databáze v paměti
-    conn = sqlite3.connect(':memory:')
-    cursor = conn.cursor()
+def main():
+    # Nastavení připojení - upravte podle potřeby
+    server = '192.168.1.14'
+    database = 'I6ABCtest'
+    username = 'test'
+    password = 'test'
 
-    # Načtení SQL souboru
-    with open(filename, 'r', encoding='utf-8') as f:
-        sql_script = f.read()
-
-    # Spuštění skriptu
     try:
-        cursor.executescript(sql_script)
-        print("SQL soubor byl úspěšně načten.")
+        # Vytvoření připojovacího řetězce
+        conn_str = f'DRIVER={{SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
 
-        # Získání seznamu tabulek
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = cursor.fetchall()
+        # Připojení k databázi
+        with pyodbc.connect(conn_str) as conn:
+            print("Úspěšně připojeno k databázi!")
 
-        print("\nTabulky v databázi:")
-        for table in tables:
-            print(f" - {table[0]}")
+            # SQL dotaz
+            query = "SELECT TOP 5 * FROM dbo.StoItemCom"
 
-            # Získání struktury tabulky
-            cursor.execute(f"PRAGMA table_info({table[0]});")
-            columns = cursor.fetchall()
-            print("   Sloupce:")
-            for col in columns:
-                print(f"    {col[1]} ({col[2]})")
+            # Načtení dat do pandas DataFrame pro lepší zobrazení
+            df = pd.read_sql(query, conn)
 
-            # Ukázka dat (prvních 5 řádků)
-            cursor.execute(f"SELECT * FROM {table[0]} LIMIT 5;")
-            rows = cursor.fetchall()
-            if rows:
-                print("   Ukázka dat:")
-                for row in rows:
-                    print("   ", row)
-            print()
+            # Výpis výsledků
+            print("\nPrvních 5 záznamů z tabulky dbo.StoItemCom:")
+            print(df)
 
-    except sqlite3.Error as e:
-        print(f"Chyba při čtení SQL souboru: {e}")
+    except Exception as e:
+        print(f"Došlo k chybě: {e}")
     finally:
-        conn.close()
+        input("\nStiskněte Enter pro ukončení...")
 
 
-# Použití
-test_sql_file('testdb.sql')
+if __name__ == "__main__":
+    main()

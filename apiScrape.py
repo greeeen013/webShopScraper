@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-def api_get_product_images(PNumber):
+async def api_get_product_images(PNumber):
     url = f"https://shop.api.de/product/details/{PNumber}"
     print(f"[DEBUG] Target URL: {url}")
 
