@@ -95,8 +95,9 @@ class ObrFormApp:
         self.produkt_check_vars = {}
         self.image_check_vars = {}
         self.loading_active = False
-        self.max_threads = 10
-        self.obrazky_na_radek = 4
+        self.max_threads = 5
+        self.image_cache = {}
+        self.obrazky_na_radek = 6
         self.scrollregion_scheduled = False
         self.loading_screen = None
 
@@ -289,8 +290,9 @@ class ObrFormApp:
             self.root.after(100, self.update_scrollregion)
 
     def update_scrollregion(self):
-        """Aktualizuje scrollregion canvasu."""
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        """Aktualizuje scrollregion canvasu s kontrolou existence."""
+        if self.inner_frame.winfo_exists():
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         self.scrollregion_scheduled = False
 
     def update_obrazky_na_radek(self, event=None):
@@ -303,9 +305,9 @@ class ObrFormApp:
 
         # Přerozdělení obrázků podle nového nastavení
         for kod, data in self.produkt_widgety.items():
-            self.reorganize_images(data['images_frame'], data['urls'])
+            self.reorganize_images(data['images_frame'], data['urls'], kod)
 
-    def reorganize_images(self, frame, urls):
+    def reorganize_images(self, frame, urls, kod):
         """Přerozdělí obrázky v frame podle aktuálního nastavení počtu na řádek."""
         # Odstranění všech obrázků z frame
         for widget in frame.winfo_children():
@@ -322,7 +324,6 @@ class ObrFormApp:
                 row_frame.pack(fill=tk.X)
                 current_col = 0
 
-            kod = DODAVATELE[self.vybrany_dodavatel]
             # Vytvoření frame pro obrázek
             img_frame = tk.Frame(row_frame)
             img_frame.grid(row=0, column=current_col, padx=5, pady=5)
@@ -493,31 +494,30 @@ class ObrFormApp:
 
     def check_threads(self):
         """Kontroluje stav načítacích vláken a spouští nová podle potřeby."""
-        alive_threads = [t for t in self.loading_threads if t.is_alive()]
-        self.loading_threads = alive_threads
+        # Odstranění ukončených vláken
+        self.loading_threads = [t for t in self.loading_threads if t.is_alive()]
 
-        if not alive_threads and not self.produkty_k_zpracovani:
+        free_slots = self.max_threads - len(self.loading_threads)
+
+        # Spuštění nových vláken pro volné sloty
+        for _ in range(min(free_slots, len(self.produkty_k_zpracovani))):
+            if self.produkty_k_zpracovani:
+                produkt = self.produkty_k_zpracovani.pop(0)
+                t = threading.Thread(target=self.load_product_images, args=(produkt,))
+                t.daemon = True
+                t.start()
+                self.loading_threads.append(t)
+
+        # Kontrola dokončení
+        if not self.loading_threads and not self.produkty_k_zpracovani:
             self.loading_active = False
             print("[THREAD] Všechna vlákna dokončena")
-
-            # Re-enable UI elements
             self.root.after(0, self.enable_ui_elements)
-
-            # Close loading screen and hide overlay
             self.root.after(0, self.loading_screen.close)
-            self.root.after(0, self.hide_overlay)  # Přidáno skrytí overlay
+            self.root.after(0, self.hide_overlay)
         else:
-            # Spustit další vlákna pokud je volná kapacita
-            free_slots = self.max_threads - len(alive_threads)
-            for _ in range(min(free_slots, len(self.produkty_k_zpracovani))):
-                if self.produkty_k_zpracovani:
-                    produkt = self.produkty_k_zpracovani.pop(0)
-                    t = threading.Thread(target=self.load_product_images, args=(produkt,))
-                    t.daemon = True
-                    t.start()
-                    self.loading_threads.append(t)
-
-            self.root.after(500, self.check_threads)
+            # Plánování další kontroly
+            self.root.after(200, self.check_threads)
 
     def enable_ui_elements(self):
         """Re-enable UI elements after loading is complete"""
@@ -575,10 +575,6 @@ class ObrFormApp:
         kod = produkt['SivCode']
         nazev = produkt.get('SivName', "")
 
-        # Pokud už byl produkt zobrazen, přeskočíme
-        if kod in self.produkt_widgety:
-            return
-
         # Frame pro celý produkt
         frame_produkt = tk.LabelFrame(
             self.inner_frame,
@@ -586,7 +582,6 @@ class ObrFormApp:
             font=("Arial", 12, "bold"),
             padx=10,
             pady=10,
-            width=800  # Pevná šířka pro stabilitu
         )
         frame_produkt.pack(fill=tk.X, padx=10, pady=5, ipadx=5, ipady=5)
         frame_produkt.grid_columnconfigure(0, weight=1)
@@ -595,12 +590,11 @@ class ObrFormApp:
         var_produkt = tk.BooleanVar(value=False)
         self.produkt_check_vars[kod] = var_produkt
 
-        # UPRAVENO: Zvětšený a tučný text
         chk_produkt = tk.Checkbutton(
             frame_produkt,
             text="Vybrat všechny obrázky",
             variable=var_produkt,
-            font=("Arial", 14, "bold"),  # Zvětšeno na 14 a tučné
+            font=("Arial", 14, "bold"),
             command=lambda k=kod: self.toggle_product_images(k)
         )
         chk_produkt.grid(row=0, column=0, sticky=tk.W, pady=(0, 10))
@@ -622,11 +616,18 @@ class ObrFormApp:
         # Aktualizovat GUI
         self.canvas.update_idletasks()
 
+    def ignore_product(self, kod):
+        """Přidá produkt do seznamu ignorovaných."""
+        self.add_ignored_code(self.vybrany_dodavatel_kod, kod)
+        if kod in self.produkt_widgety:
+            self.produkt_widgety[kod]['frame'].destroy()
+            del self.produkt_widgety[kod]
+        messagebox.showinfo("Info", f"Produkt {kod} byl přidán do ignorovaných")
+
     def add_single_image(self, produkt, url, photo):
         """Přidá jeden načtený obrázek k produktu."""
         kod = produkt['SivCode']
 
-        # Pokud byl produkt mezitím odstraněn, přeskoč
         if kod not in self.produkt_widgety:
             return
 
@@ -635,38 +636,23 @@ class ObrFormApp:
             self.img_refs[kod] = []
         self.img_refs[kod].append(photo)
 
-        # Vytvoření frame pro obrázek
-        img_frame = tk.Frame(self.produkt_widgety[kod]['images_frame'])
+        # Uložit URL
+        self.produkt_widgety[kod]['urls'].append(url)
 
-        # Rozložení podle počtu obrázků na řádek
-        if self.obrazky_na_radek == float('inf'):
-            img_frame.pack(side=tk.LEFT, padx=5, pady=5)
-        else:
-            # Pokud máme omezený počet na řádek, použijeme grid
-            row = len(self.produkt_widgety[kod]['urls']) // self.obrazky_na_radek
-            col = len(self.produkt_widgety[kod]['urls']) % self.obrazky_na_radek
-            img_frame.grid(row=row, column=col, padx=5, pady=5)
-
-        # Checkbox
+        # Přidat checkbox pro obrázek
         img_var = tk.BooleanVar(value=False)
         self.image_check_vars[kod].append(img_var)
         self.produkt_widgety[kod]['image_vars'].append(img_var)
 
-        chk = tk.Checkbutton(
-            img_frame,
-            variable=img_var,
-            command=lambda k=kod: self.update_product_check(k)
+        # Reorganizovat obrázky podle aktuálního nastavení
+        self.reorganize_images(
+            self.produkt_widgety[kod]['images_frame'],
+            self.produkt_widgety[kod]['urls'],
+            kod
         )
-        chk.pack()
 
-        # Label s obrázkem a bind na kliknutí
-        label = tk.Label(img_frame, image=photo)
-        label.image = photo
-        label.pack()
-        label.bind("<Button-1>", lambda e, var=img_var: var.set(not var.get()))
-
-        # Uložit URL
-        self.produkt_widgety[kod]['urls'].append(url)
+        # Okamžitá aktualizace GUI
+        self.root.update_idletasks()
 
     def toggle_all(self):
         """Vybere nebo zruší výběr všech obrázků u všech produktů."""
@@ -685,6 +671,10 @@ class ObrFormApp:
 
     def update_product_check(self, kod):
         """Aktualizuje stav checkboxu produktu na základě obrázků."""
+        # Zkontrolovat, zda stále existují image_vars
+        if kod not in self.image_check_vars or not self.image_check_vars[kod]:
+            return
+
         all_checked = all(var.get() for var in self.image_check_vars[kod])
         any_checked = any(var.get() for var in self.image_check_vars[kod])
 
