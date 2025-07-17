@@ -21,7 +21,7 @@ DODAVATELE = {
     #"itplanet (338745)": "338745",
 }
 
-POCTY_PRODUKTU = [25, 50, 75, 100, 1000]
+POCTY_PRODUKTU = [25, 50]
 OBRAZKY_NA_RADEK = ["2", "3", "4", "5", "6", "nekonečno"]
 
 # Nová konstanta pro soubor s ignorovanými produkty
@@ -244,7 +244,7 @@ class ObrFormApp:
         tk.Label(top_frame, text="Obrázky na řádek:", font=("Arial", 12)).pack(side=tk.LEFT, padx=(20, 5))
         self.combo_obrazky_na_radek = ttk.Combobox(top_frame, values=OBRAZKY_NA_RADEK, state="readonly",
                                                    font=("Arial", 12), width=10)
-        self.combo_obrazky_na_radek.current(2)  # Výchozí hodnota 4
+        self.combo_obrazky_na_radek.current(4)  # 4. pozice toho listu takze (6)
         self.combo_obrazky_na_radek.pack(side=tk.LEFT, padx=5)
         self.combo_obrazky_na_radek.bind("<<ComboboxSelected>>", self.update_obrazky_na_radek)
 
@@ -558,9 +558,21 @@ class ObrFormApp:
             for url in urls:
                 try:
                     r = requests.get(url, timeout=10)
-                    img = Image.open(io.BytesIO(r.content))
-                    img.thumbnail((300, 300))
-                    photo = ImageTk.PhotoImage(img)
+
+                    # Zkontroluj, zda odpověď obsahuje obrázek
+                    if 'image' not in r.headers.get('Content-Type', '').lower():
+                        print(f"[INFO] Přeskočeno (není obrázek): {url}")
+                        continue
+
+                    try:
+                        img = Image.open(io.BytesIO(r.content))
+                        img.verify()  # Ověří validitu obrázku
+                        img = Image.open(io.BytesIO(r.content))  # Nutno znovu otevřít po verify
+                        img.thumbnail((300, 300))
+                        photo = ImageTk.PhotoImage(img)
+                    except Exception as e:
+                        print(f"[INFO] Chyba při zpracování obrázku {url}: {e}")
+                        continue
 
                     # Přidej obrázek do GUI
                     self.root.after_idle(self.add_single_image, produkt, url, photo)
