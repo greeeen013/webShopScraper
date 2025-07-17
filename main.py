@@ -18,7 +18,7 @@ DODAVATELE = {
     "octo it (348651)": "348651",
     "NetFactory (351191)": "351191",
     #"Notebooksbilliger ()": "" # nescrapovaci stranka
-    "itplanet (338745)": "338745",
+    #"itplanet (338745)": "338745",
 }
 
 POCTY_PRODUKTU = [25, 50, 75, 100, 1000]
@@ -117,7 +117,6 @@ class ObrFormApp:
         from directdealScrape import directdeal_get_product_images
         from octoScrape import octo_get_product_images
         from easynotebooksScrape import easynotebooks_get_product_images
-        from itplanetScrape import itplanet_get_product_image
 
         self.dodavatele_funkce = {
             "161784": api_get_product_images,
@@ -125,7 +124,7 @@ class ObrFormApp:
             # "312585": fourcom_get_product_images, # login
             "348651": octo_get_product_images,
             "351191": easynotebooks_get_product_images,
-            "338745": itplanet_get_product_image
+            #"338745": itplanet_get_product_image
         }
 
         print("[DEBUG] Inicializace GUI...")
