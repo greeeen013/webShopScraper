@@ -118,7 +118,7 @@ class ObrFormApp:
         }
 
         # Mapování funkcí pro jednotlivé dodavatele
-        from ShopScraper import octo_get_product_images, directdeal_get_product_images, api_get_product_images, easynotebooks_get_product_images
+        from ShopScraper import octo_get_product_images, directdeal_get_product_images, api_get_product_images, easynotebooks_get_product_images, kosatec_get_product_images
 
         self.dodavatele_funkce = {
             "161784": api_get_product_images,
@@ -127,6 +127,7 @@ class ObrFormApp:
             "348651": octo_get_product_images,
             "351191": easynotebooks_get_product_images,
             #"338745": itplanet_get_product_image
+            "": kosatec_get_product_images,
         }
 
         print("[DEBUG] Inicializace GUI...")
