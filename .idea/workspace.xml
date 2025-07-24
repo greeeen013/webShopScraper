@@ -4,7 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="88c76fd1-84b7-433e-8b66-2a72d6d8ce6b" name="Changes" comment="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb">
+    <list default="true" id="88c76fd1-84b7-433e-8b66-2a72d6d8ce6b" name="Changes" comment="refaktor: přidání README.md s pokyny pro instalaci a konfiguraci aplikace">
+      <change beforePath="$PROJECT_DIR$/.idea/WebShopScraper.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/WebShopScraper.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -32,21 +33,22 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "Python.NBBscrape.executor": "Run",
-    "Python.apiScrape.executor": "Run",
-    "Python.databasetest.executor": "Run",
-    "Python.directdealScrape.executor": "Run",
-    "Python.itplanetScrape.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.session.executor": "Run",
-    "Python.webTester.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "ignore.virus.scanning.warn.message": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;Python.NBBscrape.executor&quot;: &quot;Run&quot;,
+    &quot;Python.apiScrape.executor&quot;: &quot;Run&quot;,
+    &quot;Python.databasetest.executor&quot;: &quot;Run&quot;,
+    &quot;Python.directdealScrape.executor&quot;: &quot;Run&quot;,
+    &quot;Python.itplanetScrape.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.session.executor&quot;: &quot;Run&quot;,
+    &quot;Python.webTester.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/green013/PycharmProjects/test&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Python.main">
     <configuration name="apiScrape" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="WebShopScraper" />
@@ -200,12 +202,75 @@
       <option name="project" value="LOCAL" />
       <updated>1752755200726</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="refaktor: načtení proměnných prostředí z .env souboru">
+      <option name="closed" value="true" />
+      <created>1752755481855</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1752755481855</updated>
+    </task>
+    <task id="LOCAL-00004" summary="refaktor: zakomentování načítání obrázků z itplanet">
+      <option name="closed" value="true" />
+      <created>1752755655648</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1752755655648</updated>
+    </task>
+    <task id="LOCAL-00005" summary="refaktor: aktualizace konfigurace projektu a přidání requirements.txt">
+      <option name="closed" value="true" />
+      <created>1752757009658</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1752757009658</updated>
+    </task>
+    <task id="LOCAL-00006" summary="refaktor: načtení názvu tabulky z proměnné prostředí">
+      <option name="closed" value="true" />
+      <created>1752757138856</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1752757138856</updated>
+    </task>
+    <task id="LOCAL-00007" summary="refaktor: úprava počtu maximálních vláken a zlepšení správy obrázků">
+      <option name="closed" value="true" />
+      <created>1752761298839</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1752761298839</updated>
+    </task>
+    <task id="LOCAL-00008" summary="refaktor: úprava počtu produktů a zlepšení zpracování obrázků">
+      <option name="closed" value="true" />
+      <created>1752763338910</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1752763338910</updated>
+    </task>
+    <task id="LOCAL-00009" summary="refaktor: přidání README.md s pokyny pro instalaci a konfiguraci aplikace">
+      <option name="closed" value="true" />
+      <created>1752763618653</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1752763618653</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="funkční form a napojení api" />
     <MESSAGE value="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb" />
-    <option name="LAST_COMMIT_MESSAGE" value="refaktor: převod funkcí pro načítání obrázků na asynchronní a vylepšení zpracování chyb" />
+    <MESSAGE value="refaktor: načtení proměnných prostředí z .env souboru" />
+    <MESSAGE value="refaktor: zakomentování načítání obrázků z itplanet" />
+    <MESSAGE value="refaktor: aktualizace konfigurace projektu a přidání requirements.txt" />
+    <MESSAGE value="refaktor: načtení názvu tabulky z proměnné prostředí" />
+    <MESSAGE value="refaktor: úprava počtu maximálních vláken a zlepšení správy obrázků" />
+    <MESSAGE value="refaktor: úprava počtu produktů a zlepšení zpracování obrázků" />
+    <MESSAGE value="refaktor: přidání README.md s pokyny pro instalaci a konfiguraci aplikace" />
+    <option name="LAST_COMMIT_MESSAGE" value="refaktor: přidání README.md s pokyny pro instalaci a konfiguraci aplikace" />
   </component>
 </project>

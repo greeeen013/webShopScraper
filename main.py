@@ -91,7 +91,7 @@ class ObrFormApp:
         self.buffer_size = 25
         self.image_queue = queue.Queue()
         self.loading_threads = []
-        self.all_check_var = tk.BooleanVar(value=False)
+        self.all_check_var = tk.BooleanVar(value=True) # zaškrtnutý checkbox pro "Vybrat vše"
         self.produkt_check_vars = {}
         self.image_check_vars = {}
         self.loading_active = False
@@ -118,10 +118,7 @@ class ObrFormApp:
         }
 
         # Mapování funkcí pro jednotlivé dodavatele
-        from apiScrape import api_get_product_images
-        from directdealScrape import directdeal_get_product_images
-        from octoScrape import octo_get_product_images
-        from easynotebooksScrape import easynotebooks_get_product_images
+        from ShopScraper import octo_get_product_images, directdeal_get_product_images, api_get_product_images, easynotebooks_get_product_images
 
         self.dodavatele_funkce = {
             "161784": api_get_product_images,
@@ -599,7 +596,7 @@ class ObrFormApp:
         frame_produkt.grid_columnconfigure(0, weight=1)
 
         # Checkbox pro výběr všech obrázků v produktu
-        var_produkt = tk.BooleanVar(value=False)
+        var_produkt = tk.BooleanVar(value=True) # zaksrtnuty checkbox
         self.produkt_check_vars[kod] = var_produkt
 
         chk_produkt = tk.Checkbutton(
@@ -652,7 +649,7 @@ class ObrFormApp:
         self.produkt_widgety[kod]['urls'].append(url)
 
         # Přidat checkbox pro obrázek
-        img_var = tk.BooleanVar(value=False)
+        img_var = tk.BooleanVar(value=True) # Základně zaškrtnutý
         self.image_check_vars[kod].append(img_var)
         self.produkt_widgety[kod]['image_vars'].append(img_var)
 
@@ -703,6 +700,7 @@ class ObrFormApp:
         if not self.connect_to_database():
             return
 
+        products_to_remove = []
         try:
             for kod, data in self.produkt_widgety.items():
                 vybrane_urls = [
@@ -720,14 +718,20 @@ class ObrFormApp:
                         WHERE [{self.column_mapping['code']}] = ?
                     """
                     self.cursor.execute(query, (zapis, produkt['SivCode']))
+                    products_to_remove.append(kod)
+                else:
+                    # ZMĚNA: Pokud nebyly vybrány žádné obrázky, přidat do ignorovaných
+                    self.add_ignored_code(self.vybrany_dodavatel_kod, kod)
+                    products_to_remove.append(kod)
 
             self.conn.commit()
             messagebox.showinfo("Info", "Všechny vybrané produkty byly uloženy.")
 
             # Odstranění uložených produktů z GUI
-            for kod in list(self.produkt_widgety.keys()):
-                self.produkt_widgety[kod]['frame'].destroy()
-                del self.produkt_widgety[kod]
+            for kod in products_to_remove:
+                if kod in self.produkt_widgety:
+                    self.produkt_widgety[kod]['frame'].destroy()
+                    del self.produkt_widgety[kod]
                 if kod in self.img_refs:
                     del self.img_refs[kod]
 
